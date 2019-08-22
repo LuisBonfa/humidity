@@ -1,5 +1,6 @@
 package com.ultraschemer.microweb.vertx;
 
+import com.google.common.base.Throwables;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
@@ -8,6 +9,7 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.ext.web.Router;
 import com.ultraschemer.microweb.domain.ServiceConfiguration;
+import io.vertx.mqtt.MqttServer;
 
 /**
  *
@@ -30,6 +32,7 @@ public abstract class WebAppVerticle extends AbstractVerticle {
 
     /**
      * Safe access to this Verticle Router.
+     *
      * @return A router object to be used by the caller.
      */
     private Router getRouter() {
@@ -38,6 +41,7 @@ public abstract class WebAppVerticle extends AbstractVerticle {
 
     /**
      * Http port Getter.
+     *
      * @return The Http listening port number.
      */
     private int getHttpPort() {
@@ -46,6 +50,7 @@ public abstract class WebAppVerticle extends AbstractVerticle {
 
     /**
      * Http port Setter.
+     *
      * @param httpPort The port which Http server will listen.
      */
     private void setHttpPort(int httpPort) {
@@ -65,11 +70,11 @@ public abstract class WebAppVerticle extends AbstractVerticle {
 
     /**
      * This method is a helper to controller registration on routes.
-     *
+     * <p>
      * All route is defined by an HTTP verb, the method, and by a path or URI.
      *
-     * @param method The HTTP verb on which the Controller will be set.
-     * @param path The path or resource linked to the route.
+     * @param method          The HTTP verb on which the Controller will be set.
+     * @param path            The path or resource linked to the route.
      * @param basicController The controller receiving the route.
      */
     protected void registerController(HttpMethod method, String path, BasicController basicController) {
@@ -78,10 +83,10 @@ public abstract class WebAppVerticle extends AbstractVerticle {
 
     /**
      * This method is a helper to controller registration as filters.
-     *
+     * <p>
      * Filters are called on ALL routes, and can be initialization filters, when registered before router registration,
      * or finalization filters, when registered after routes.
-     *
+     * <p>
      * It's possible to register filters between routes, however, no use case for this kind of registration has been
      * found.
      *
@@ -98,9 +103,11 @@ public abstract class WebAppVerticle extends AbstractVerticle {
                 this.setHttpPort(ServiceConfiguration.getHttpServicePort());
                 // Initialize all routes and configurations:
                 this.initialization();
+                // Start the Mqtt Server
+                this.mqttStartServer();
                 // Return the configuration success:
                 future.complete();
-            } catch(Exception e) {
+            } catch (Exception e) {
                 future.fail(e);
             }
         }, res -> {
@@ -115,7 +122,8 @@ public abstract class WebAppVerticle extends AbstractVerticle {
 
                 System.out.println("HTTP Server started on port " + getHttpPort());
             } else {
-                System.out.println("Configuration error: " + res.cause().getMessage());
+                System.out.println("Configuration error: " + res.cause().getMessage() +
+                        "\nStack Trace: " + Throwables.getStackTraceAsString(res.cause()));
             }
         });
     }
@@ -129,5 +137,9 @@ public abstract class WebAppVerticle extends AbstractVerticle {
     /**
      * Method that can be used to implement a WebSocket hangler:
      */
-    public void webSocketInitialization(ServerWebSocket webSocket) { /* Empty: for override */  }
+    public void webSocketInitialization(ServerWebSocket webSocket) { /* Empty: for override */ }
+
+    public void mqttStartServer() { }
 }
+
+
