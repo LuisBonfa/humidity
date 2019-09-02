@@ -74,7 +74,9 @@ public class App extends WebAppVerticle {
         //Humidity Management Routes
         registerController(HttpMethod.GET, "/v0/humidity", new ListHumiditiesController());
         registerController(HttpMethod.GET, "/v0/humidity/:deviceOrAreaId", new ListHumiditiesByIdController());
+        registerController(HttpMethod.GET, "/v0/humidity/:deviceOrAreaId/date", new ListHumiditiesByDeviceOrAreaAndDate());
         registerController(HttpMethod.POST, "/v0/humidity", new InsertHumidityController());
+
 
 
         // Registra os filtros de finalização:
