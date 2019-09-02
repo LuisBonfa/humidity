@@ -27,5 +27,10 @@
         <mapping class="com.ultraschemer.microweb.entity.User_Role"/>
         <mapping class="com.ultraschemer.microweb.entity.LockControl"/>
         <mapping class="com.ultraschemer.microweb.entity.Runtime"/>
+        <mapping class="com.humidity.entity.Humidity"/>
+        <mapping class="com.humidity.entity.Area"/>
+        <mapping class="com.humidity.entity.Device"/>
+        <mapping class="com.humidity.entity.Model"/>
+
     </session-factory>
 </hibernate-configuration>

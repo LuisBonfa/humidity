@@ -1,3 +1,4 @@
+import com.humidity.controller.*;
 import com.ultraschemer.microweb.controller.*;
 import com.ultraschemer.microweb.domain.JwtSecurityManager;
 import com.ultraschemer.microweb.domain.RoleManagement;
@@ -7,8 +8,10 @@ import com.ultraschemer.microweb.vertx.WebAppVerticle;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.mqtt.MqttServer;
 import io.vertx.mqtt.MqttTopicSubscription;
+
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,14 +38,14 @@ public class App extends WebAppVerticle {
         // Initialize additional roles:
         RoleManagement.initializeDefault();
 
-        // Registra os filtros de inicialização:
+        // Initialization Filters:
         registerFilter(new AuthorizationFilter(this.getVertx()));
 
         // Controllers Registers:
         registerController(HttpMethod.POST, "/v0/login", new LoginController(this.getVertx()));
         registerController(HttpMethod.GET, "/v0/logoff", new LogoffController());
 
-        // Users Managements routes
+        // Users Management routes
         registerController(HttpMethod.GET, "/v0/user/:userIdOrName", new OtherUsersController());
         registerController(HttpMethod.GET, "/v0/user", new UserController());
         registerController(HttpMethod.GET, "/v0/role", new RoleController());
@@ -53,7 +56,26 @@ public class App extends WebAppVerticle {
         registerController(HttpMethod.GET, "/v0/users", new UserListController());
         registerController(HttpMethod.GET, "/v0/users/:userIdOrName", new UserListController());
 
-        // Humidity Managements Routes
+        //Model Management Routes
+        registerController(HttpMethod.GET, "/v0/model", new ListModelsController());
+
+        // Area Management Routes
+        registerController(HttpMethod.GET, "/v0/area", new ListAreasController());
+        registerController(HttpMethod.GET, "/v0/area/:areaIdOrName", new LoadAreaByIdOrNameController());
+        registerController(HttpMethod.POST, "/v0/area", new InsertAreaController());
+        registerController(HttpMethod.PUT, "/v0/area/:areaId", new UpdateAreaStatusController());
+
+        //Device Management Routes
+        registerController(HttpMethod.GET, "/v0/device", new ListDevicesController());
+        registerController(HttpMethod.GET, "/v0/device/:deviceIdOrName", new LoadDeviceByIdOrNameController());
+        registerController(HttpMethod.POST, "/v0/device", new InsertDeviceController());
+        registerController(HttpMethod.PUT, "/v0/device/:deviceId", new UpdateDeviceController());
+
+        //Humidity Management Routes
+        registerController(HttpMethod.GET, "/v0/humidity", new ListHumiditiesController());
+        registerController(HttpMethod.GET, "/v0/humidity/:deviceOrAreaId", new ListHumiditiesByIdController());
+        registerController(HttpMethod.POST, "/v0/humidity", new InsertHumidityController());
+
 
         // Registra os filtros de finalização:
         // Bem... eles ainda não existem...
@@ -109,6 +131,11 @@ public class App extends WebAppVerticle {
 
                 System.out.println("Just received message [" + message.payload().toString(Charset.defaultCharset()) + "] with QoS [" + message.qosLevel() + "]");
 
+                endpoint.publish("humidity",
+                        Buffer.buffer("Hello from the Vert.x MQTT server"),
+                        MqttQoS.EXACTLY_ONCE,
+                        false,
+                        false);
                 if (message.qosLevel() == MqttQoS.AT_LEAST_ONCE) {
                     endpoint.publishAcknowledge(message.messageId());
                 } else if (message.qosLevel() == MqttQoS.EXACTLY_ONCE) {
@@ -118,12 +145,6 @@ public class App extends WebAppVerticle {
             }).publishReleaseHandler(messageId -> {
                 endpoint.publishComplete(messageId);
             });
-
-            endpoint.publish("my_topic",
-                    Buffer.buffer("Hello from the Vert.x MQTT server"),
-                    MqttQoS.EXACTLY_ONCE,
-                    false,
-                    false);
 
             // specifing handlers for handling QoS 1 and 2
             endpoint.publishAcknowledgeHandler(messageId -> {
